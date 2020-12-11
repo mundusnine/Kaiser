@@ -1,0 +1,22 @@
+
+callback UPDATE_FUNC = void (float dt);
+callback RENDER_FUNC = void (VoidPtr pipeline);// @TODO: Change this when we have more knowledge
+
+interface Script_t {
+    [Ref] attribute UPDATE_FUNC updates;
+    attribute long updates_count;
+    attribute long updates_used;
+
+    [Ref] attribute RENDER_FUNC renders;
+    attribute long renders_count;
+    attribute long renders_used;
+};
+
+[Class]
+interface Script {
+    Script_t create_script(long updates_count, long renders_count);
+    void notifyOnUpdate(Script_t script,UPDATE_FUNC value);
+    void notifyOnRender(Script_t script,RENDER_FUNC value);
+    void removeOnUpdate(Script_t script,UPDATE_FUNC value);
+    void removeOnRender(Script_t script,RENDER_FUNC value);
+};

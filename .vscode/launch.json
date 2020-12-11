@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "name": "Launch Kaiser",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/build/Debug/Kaiser",
+            "preLaunchTask": "Kaiser: Debug Build",
+            "externalConsole": true,
+            "cwd": "${workspaceFolder}/build/Debug",
+        }
+    ],
+    "compounds": []
+}
