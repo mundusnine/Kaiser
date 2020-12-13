@@ -7,7 +7,15 @@
             "program": "${workspaceRoot}/build/Debug/Kaiser",
             "preLaunchTask": "Kaiser: Debug Build",
             "externalConsole": true,
-            "cwd": "${workspaceFolder}/build/Debug",
+            "cwd": "${workspaceFolder}/build/Debug"
+        },
+        {
+            "name": "Kinc: Launch",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "/home/jsnadeau/Documents/repos/Kaiser/Deployment/New-Project",
+            "cwd": "/home/jsnadeau/Documents/repos/Kaiser/Deployment",
+            "preLaunchTask": "Kinc: Build for Linux"
         }
     ],
     "compounds": []
