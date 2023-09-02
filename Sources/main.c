@@ -1,18 +1,10 @@
-#include <kinc/pch.h>
-
-#include <kinc/graphics4/graphics.h>
-#include <kinc/system.h>
-
 #include <stdio.h>
+#include "engine.h"
 
-static void update(){
-	printf("Hello Kaiser !");	
-}
+int main(int argc, char** argv) {
+	engine_init("Dear ImGui", 1024, 768);
 
-int kickstart(int argc, char** argv) {
-	kinc_init("Dear ImGui", 1024, 768, NULL, NULL);
-
-	kinc_set_update_callback(update);
-	kinc_start();
+	
+	engine_start();
 	return 0;
 }

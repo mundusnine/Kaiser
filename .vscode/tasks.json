@@ -4,15 +4,9 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Kaiser: Debug Build",
+            "label": "Debug Linux: Raylib",
             "type": "shell",
-            "command": "${workspaceFolder}/Tools/nodejs_bin/node-linux64 ${workspaceFolder}/make.js --debug --compile",
-            "problemMatcher":"$gcc",
-            "group":{
-                "kind": "build",
-                "isDefault": true
-            }
-            
+            "command": "./Tools/linux_x64/kmake --tolang raylib --compile --debug"
         }
     ]
 }

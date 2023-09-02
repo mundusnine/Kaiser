@@ -1,7 +1,8 @@
 #include "script.h"
-
-#include <kinc/log.h>
-#include <kinc/system.h>
+#include <stddef.h>
+#include <stdlib.h>
+// #include <kinc/log.h>
+// #include <kinc/system.h>
 
 Script* create_script(int32_t updates_count, int32_t renders_count){
 

@@ -1,13 +1,12 @@
 #pragma once
 
-#include <kinc/pch.h>
-#include <kinc/graphics4/graphics.h>
+#include <stdint.h>
 
 #include "object.h"
 
 typedef void (*UPDATE_FUNC)(float);
 
-typedef void (*RENDER_FUNC)(kinc_g4_pipeline_impl_t*);
+typedef void (*RENDER_FUNC)(/*kinc_g4_pipeline_impl_t*/void*);
 
 typedef struct {
     #ifdef DEBUG_KAISER
@@ -32,26 +31,26 @@ typedef struct {
 /**
  * Creates a Script Object with the number of funcs specified.
 **/
-KINC_FUNC Script* create_script(int32_t updates_count, int32_t renders_count,const char *name);
+Script* create_script(int32_t updates_count, int32_t renders_count,const char *name);
 #else
 
-KINC_FUNC Script* create_script(int32_t updates_count, int32_t renders_count);
+Script* create_script(int32_t updates_count, int32_t renders_count);
 #endif
 
 /**
  * Adds an update function to be called by the engine.
 **/
-KINC_FUNC void notifyOnUpdate(Script* script,UPDATE_FUNC value);
+void notifyOnUpdate(Script* script,UPDATE_FUNC value);
 
 /**
  * Adds an update function to be called by the engine.
 **/
-KINC_FUNC void notifyOnFixedUpdate(Script* script,UPDATE_FUNC value);
+void notifyOnFixedUpdate(Script* script,UPDATE_FUNC value);
 
 /**
  * Adds a render function to be called by the 3D graphics engine.
 **/
-KINC_FUNC void notifyOnRender(Script* script,RENDER_FUNC value);
+void notifyOnRender(Script* script,RENDER_FUNC value);
 
 
 // void notifyOnRender2D(struct Script* script); @TODO: Add this when Rob made the g2 impl in kinc
@@ -59,14 +58,14 @@ KINC_FUNC void notifyOnRender(Script* script,RENDER_FUNC value);
 /**
  * Removes the update function from the Script.
 **/
-KINC_FUNC void removeOnUpdate(Script* script,UPDATE_FUNC value);
+void removeOnUpdate(Script* script,UPDATE_FUNC value);
 
 /**
  * Removes the fixed update function from the Script.
 **/
-KINC_FUNC void removeOnUpdate(Script* script,UPDATE_FUNC value);
+void removeOnUpdate(Script* script,UPDATE_FUNC value);
 
 /**
  * Removes the render function from the Script.
 **/
-KINC_FUNC void removeOnRender(Script* script,RENDER_FUNC value);
+void removeOnRender(Script* script,RENDER_FUNC value);
