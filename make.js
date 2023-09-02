@@ -1,1 +1,0 @@
-require('./Kinc/Tools/kincmake/koremake.js');

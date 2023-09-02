@@ -1,3 +1,0 @@
-[submodule "Tools/nodejs_bin"]
-	path = Tools/nodejs_bin
-	url = https://github.com/Kode/nodejs_bin.git
