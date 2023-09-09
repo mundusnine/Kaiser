@@ -1,7 +1,7 @@
 build
 Deployment/**
 !Deployment/keepme
-# .vscode/**
-# !.vscode/launch.json
-# !.vscode/tasks.json
+.vscode/**
+!.vscode/launch.json
+!.vscode/tasks.json
 Kinc
