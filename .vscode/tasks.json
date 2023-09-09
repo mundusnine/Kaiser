@@ -6,7 +6,11 @@
         {
             "label": "Debug Linux: Raylib",
             "type": "shell",
-            "command": "./Tools/linux_x64/kmake --tolang raylib --compile --debug"
+            "command": "./Tools/linux_x64/kmake --tolang raylib --compile --debug",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
         }
     ]
 }
