@@ -1,7 +1,7 @@
 # Kaiser
 We never rest on our laurels
 
-C based game engine. Tool and framework agnostic by design.
+C based game engine. Tool and framework agnostic by design. Will integrate C hot-reload using engine-link.
 
 ## Tools:
 Will use GLTF as intermediary format, where possible. The lower in the list a tool is, the lower in priority for the project it is. Open up issues for interest in a specific tool.
