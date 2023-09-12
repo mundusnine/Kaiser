@@ -8,8 +8,7 @@ const system = platform === Platform.Windows ? "win32" :
 
 let project = new Project('Provider');
 
-project.addIncludeDir("xxHash");
-if(Options[1] === "raylib"){
+if(Options[0] === "raylib"){
     project.addExclude("raylib/src/external/dirent.h");
     const raylib_path = "raylib/src";
     project.addIncludeDir(raylib_path);
@@ -140,14 +139,20 @@ if(Options[1] === "raylib"){
         // endif()
     }
 }
-if(Options[1] === "kinc"){
+if(Options[0] === "kinc"){
     //@TODO: Add me baby
+}
+if(Options.indexOf("2D") !== -1){
+    //Add LDTK support
+    project.addFiles(
+        'cLDtk/*',
+        // "ServiceProviders/LDtk/*"
+    );
+    project.addIncludeDir('cLDtk');
 }
 project.addIncludeDir("../Sources");
 project.addFiles(
-    `ServiceProviders/${Options[1]}/*`,
-    "xxHash/xxhash.c",
-    "xxHash/xxhash.h",
+    `ServiceProviders/${Options[0]}/*`,
 );
 
 project.flatten();

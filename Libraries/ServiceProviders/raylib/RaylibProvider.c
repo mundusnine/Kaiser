@@ -3,6 +3,7 @@
 #include "raylib.h"
 
 void service_provider_init(const char* title,int w,int h){
+    InitAudioDevice();
     InitWindow(w,h,title);
 }
 void service_provider_start(void (*update)(void)){
@@ -11,4 +12,6 @@ void service_provider_start(void (*update)(void)){
         update();
     }
     CloseWindow();
+    CloseAudioDevice();
+
 }

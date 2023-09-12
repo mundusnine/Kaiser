@@ -1,24 +1,29 @@
+const fieldName = "service_provider";
+const optsName = "options";
 let project = new Project('Kaiser');
-
-const serviceCommand = "--tolang";
-let index = process.argv.indexOf(serviceCommand);//eventually change this to custom command arg --service...
-let isDebug = process.argv.indexOf("--debug") >= 0;
-if(!isDebug){
-    project.addDefine("NDEBUG");
-}
-let service_flags = []; 
-if (index >= 0) {
-    service_flags = process.argv.splice(index,2);
-    if(service_flags[1] !== "raylib" && service_flags[1] !== "kinc"){
+if (typeof Options === 'object' && Options !== null && Options.hasOwnProperty(fieldName)) {
+    let service_flags = [Options.service_provider];
+    if(service_flags[0] !== "raylib" && service_flags[0] !== "kinc"){
         console.error(`Error: Service provider ${service_flags[1]} not supported.`);
         process.exit(1);
     }
+    if(optsName in Options){
+        const opts = Options[optsName];
+        if(Array.isArray(opts)){
+            for(let i =0; i < opts.length;++i ){
+                service_flags.push(opts[i]);
+            }
+        }
+    }
+    await project.addProject("./Libraries",service_flags);
+    project.addFiles('Sources/**');
+    project.setDebugDir('Deployment');
+
+    project.flatten();
+
+    resolve(project);
 }
-
-await project.addProject("./Libraries",service_flags);
-project.addFiles('Sources/**');
-project.setDebugDir('Deployment');
-
-project.flatten();
-
-resolve(project);
+else {
+    console.log(`You didn't pass an object with the field ${fieldName} to the addProject function i.e. project.addProject("Kaiser/Folder/path",{${fieldName}: "raylib"})`)
+    exit(1);
+}

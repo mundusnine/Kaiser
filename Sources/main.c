@@ -2,9 +2,6 @@
 #include "engine.h"
 
 int main(int argc, char** argv) {
-	engine_init("Dear ImGui", 1024, 768);
-
-	
-	engine_start();
+	init_gameplay();
 	return 0;
 }

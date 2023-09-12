@@ -11,7 +11,7 @@ Will use GLTF as intermediary format, where possible. The lower in the list a to
 - [ ] [Tiled](https://www.mapeditor.org/)
 ### 3D:
 - [ ] [Total Editor 3](https://github.com/TheTophatDemon/Total-Editor-3)(using either gltf or the custom scene format)
-- [ ] Godot editor using the GTLF exporter
+- [ ] Godot editor using the GLTF exporter
 - [ ] Source2 tools(using [ValveResourceFormat decompiler](https://valveresourceformat.github.io/))
 - [ ] Trenchbroom(using either .obj export or [libmap](https://github.com/QodotPlugin/libmap))
 - [ ] [Elit3D](https://github.com/christt105/Elit3D)

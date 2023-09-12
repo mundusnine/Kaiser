@@ -42,15 +42,15 @@ void raylib_draw_line(float x1, float y1, float x2, float y2){
     DrawLine(x1,y1,x2,y2,GetColor(lastColor));
 }
 
-static uint64_t num_images = 0;
+static UID num_images = 0;
 static Texture2D images[MAX_IMAGES] = {0};
-uint64_t raylib_load_image(const char* filepath){
+UID raylib_load_image(const char* filepath){
     assert(num_images+1 < MAX_IMAGES);
     images[num_images] =  LoadTexture(filepath);
     return num_images++;
 }
 
-void raylib_draw_image(uint64_t id,KRect src, KRect dst,float angle,KFlip flip){
+void raylib_draw_image(UID id,KRect src, KRect dst,float angle,KFlip flip){
     assert(id < num_images);
     Rectangle s_rect = {.x=src.x,.y=src.y,.width=src.w,.height=src.h};
     Rectangle d_rect = {.x=dst.x,.y=dst.y,.width=dst.w,.height=dst.h};
@@ -58,20 +58,20 @@ void raylib_draw_image(uint64_t id,KRect src, KRect dst,float angle,KFlip flip){
     DrawTexturePro(images[id],s_rect,d_rect,origin,angle,GetColor(lastColor));
 }
 
-void raylib_get_img_size(uint64_t id,int* w,int* h){
+void raylib_get_img_size(UID id,int* w,int* h){
     assert(id < num_images);
     *w = images[id].width;
     *h = images[id].height;
 }
 
-static uint64_t num_meshes = 0;
+static UID num_meshes = 0;
 static Model meshes[MAX_IMAGES] = {0};
-uint64_t raylib_load_mesh(const char* filepath){
+UID raylib_load_mesh(const char* filepath){
     meshes[num_meshes] = LoadModel(filepath);
     return num_meshes++;
 }
 
-void raylib_draw_mesh(uint64_t id){
+void raylib_draw_mesh(UID id){
     Vector3 pos = {0};
     DrawModel(meshes[id],pos,1.0f,WHITE);
 }

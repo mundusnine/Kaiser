@@ -19,7 +19,7 @@ void raylib_set_max_fps(int fps){
 }
 
 void raylib_sleep_end_frame(void){
-    double sleep_time = GetTime() - start + target_fps;
+    double sleep_time = start + target_fps - GetTime();
     if(sleep_time >0){
         WaitTime(sleep_time);
     }
@@ -28,7 +28,7 @@ void raylib_sleep_end_frame(void){
 static ITimer timer = {0};
 void create_timer_provider(void* engine){
     end = GetTime();
-
+    SetTargetFPS(1000);
     timer.dt = raylib_dt;
     timer.sleep_end_frame = raylib_sleep_end_frame;
     timer.set_max_fps = raylib_set_max_fps;

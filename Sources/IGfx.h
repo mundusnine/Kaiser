@@ -14,12 +14,12 @@ typedef struct IGfx {
     void (*fillRect)(float x, float y, float w,float h);
     void (*drawLine)(float x1, float y1, float x2, float y2);
     
-    uint64_t (*loadImg)(const char* filepath);
-    void (*drawImg)(uint64_t id,KRect src, KRect dst,float angle,KFlip flip);
-    void (*getImgSize)(uint64_t id,int* w,int* h);
+    UID (*loadImg)(const char* filepath);
+    void (*drawImg)(UID id,KRect src, KRect dst,float angle,KFlip flip);
+    void (*getImgSize)(UID id,int* w,int* h);
 
-    uint64_t (*loadMesh)(const char* filepath);
-    void (*drawMesh)(uint64_t id);
+    UID (*loadMesh)(const char* filepath);
+    void (*drawMesh)(UID id);
 } IGfx;
 
 void create_graphics_provider(void* engine);
