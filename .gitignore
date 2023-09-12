@@ -1,4 +1,6 @@
 build
+projects/**
+!projects/keepme
 examples/sample/Deployment/**
 !examples/sample/Deployment/assets
 !examples/sample/Deployment/assets/**
