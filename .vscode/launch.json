@@ -4,8 +4,8 @@
 			"name": "Kinc: Launch",
 			"type": "cppdbg",
 			"request": "launch",
-			"program": "/run/media/winesap/DATA/repos/Kaiser/build/Debug/Test",
-			"cwd": "/run/media/winesap/DATA/repos/Kaiser/Deployment",
+			"program": "/run/media/winesap/DATA/repos/Kaiser/examples/sample/Deployment/Test",
+			"cwd": "/run/media/winesap/DATA/repos/Kaiser/examples/sample/Deployment",
 			"preLaunchTask": "Debug Linux: Raylib"
 		}
 	],

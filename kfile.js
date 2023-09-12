@@ -17,8 +17,6 @@ if (typeof Options === 'object' && Options !== null && Options.hasOwnProperty(fi
     }
     await project.addProject("./Libraries",service_flags);
     project.addFiles('Sources/**');
-    project.setDebugDir('Deployment');
-
     project.flatten();
 
     resolve(project);
