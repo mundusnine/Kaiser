@@ -1,3 +1,10 @@
+# Editor:
+- Do [this](https://nitter.net/MikeDiskett/status/1705420794980184412)
+- Have a way to share low level commands between Editor and Runtime.
+- Use [Im3D](https://github.com/john-chapman/im3d) for gizmos
+
+# Engine:
+
 - [ ] For Kinc provider integrate  [Soloud](https://github.com/jarikomppa/soloud)
 - [ ] Create raylib provider
 - [ ] Investigate using [SlimRaster](https://github.com/HardCoreCodin/SlimRaster)

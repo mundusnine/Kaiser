@@ -7,3 +7,9 @@
 [submodule "Libraries/cLDtk"]
 	path = Libraries/cLDtk
 	url = https://github.com/mundusnine/cLDtk.git
+[submodule "Libraries/rlImGui"]
+	path = Libraries/rlImGui
+	url = https://github.com/raylib-extras/rlImGui.git
+[submodule "Libraries/imgui"]
+	path = Libraries/imgui
+	url = https://github.com/ocornut/imgui.git

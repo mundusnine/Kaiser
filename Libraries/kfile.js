@@ -8,6 +8,16 @@ const system = platform === Platform.Windows ? "win32" :
 
 let project = new Project('Provider');
 
+//@TODO: Add config for GUI provider, only use imgui for now.
+project.addIncludeDir("imgui");
+project.addFiles(
+	'imgui/imgui.cpp',
+	'imgui/imgui.h',
+	'imgui/imgui_draw.cpp',
+	'imgui/imgui_tables.cpp',
+	'imgui/imgui_widgets.cpp'
+);
+
 if(Options[0] === "raylib"){
     project.addExclude("raylib/src/external/dirent.h");
     const raylib_path = "raylib/src";
@@ -17,6 +27,14 @@ if(Options[0] === "raylib"){
     project.addDefine("RAYLIB_PROVIDER");
     project.addDefine("PLATFORM_DESKTOP");
 
+    //rlImgui
+    project.addIncludeDir("rlImGui");
+    project.addFiles(
+        "rlImGui/rlImGui.cpp",
+        "rlImGui/rlImGui.h",
+        "rlImGui/rlImGuiColors.h"
+    );
+    
     project.addFiles(
         raylib_path+"/rcore.c",
         raylib_path+"/rmodels.c",
