@@ -42,7 +42,7 @@ typedef struct Entity Entity;
 #define MAX_COMPONENTS 16
 #define MAX_IMAGES 512
 #define MAX_ENTITIES 512 // @TODO: We will make the entity amount dynamic
-#define MAX_PRIVATE_FUNCS 2
+#define MAX_PRIVATE_FUNCS 3
 
 #define UID uint16_t
 #define BAD_UID UINT16_MAX

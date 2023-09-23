@@ -15,7 +15,8 @@
 
 typedef enum{
     Update,
-    Render
+    Render,
+    Shutdown
 }private_funcs_e;
 
 static Engine engine ={0};
@@ -28,6 +29,7 @@ void engine_init(const char* window_name,int w, int h){
     
     create_timer_provider(&engine);
     create_input_provider(&engine);
+    create_logger_provider(&engine);
     create_world_provider(&engine);
     create_graphics_provider(&engine);
     create_audio_provider(&engine);
@@ -48,6 +50,7 @@ void engine_init(const char* window_name,int w, int h){
 
 void engine_start(void){
     service_provider_start(engine_update);
+    engine.log->private_funcs[Shutdown](NULL);
 }
 
 void engine_update(void){

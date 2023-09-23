@@ -2,6 +2,7 @@
 
 #include "ITimer.h"
 #include "IInput.h"
+#include "ILogger.h"
 #include "IGfx.h"
 #include "ISfx.h"
 #include "IWorld.h"
@@ -10,6 +11,7 @@
 typedef struct Engine {
     const ITimer* timer;
     const IInput* input;
+    const ILogger* log;
     const IGfx* gfx;
     const ISfx* sfx;
     const IWorld* world;

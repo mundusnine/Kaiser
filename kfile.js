@@ -14,6 +14,13 @@ if (typeof Options === 'object' && Options !== null && Options.hasOwnProperty(fi
                 service_flags.push(opts[i]);
             }
         }
+        if(opts.indexOf("Debug") > -1){
+            console.log("Debug Mode");
+            project.addDefine("_DEBUG");
+        }
+        else{
+            project.addDefine("NDEBUG");
+        }
     }
     await project.addProject("./Libraries",service_flags);
     project.addFiles('Sources/**');

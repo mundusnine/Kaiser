@@ -11,6 +11,8 @@ typedef struct ILevelLoader {
     */
     void (*getLevels)(char** names, int* amount);
     void (*loadLevel)(char* name);
+    void (*getEntities)(char** names, int* amount);
+    UID  (*load_entity)(char* name);
 } ILevelLoader;
 
 void create_levelLoader_provider(void* engine);
