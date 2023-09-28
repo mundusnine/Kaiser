@@ -29,6 +29,7 @@ void engine_init(const char* window_name,int w, int h){
     
     create_timer_provider(&engine);
     create_input_provider(&engine);
+    create_ui_provider(&engine);
     create_logger_provider(&engine);
     create_world_provider(&engine);
     create_graphics_provider(&engine);
@@ -48,11 +49,6 @@ void engine_init(const char* window_name,int w, int h){
     // #endif
 }
 
-void engine_start(void){
-    service_provider_start(engine_update);
-    engine.log->private_funcs[Shutdown](NULL);
-}
-
 void engine_update(void){
     engine.timer->private_funcs[Update](NULL);
     engine.input->private_funcs[Update](NULL);
@@ -64,6 +60,18 @@ void engine_update(void){
     engine.timer->sleep_end_frame();
 
 }
+
+void engine_start(void){
+    service_provider_start(engine_update);
+    engine.ui->private_funcs[Shutdown](NULL);
+    engine.log->private_funcs[Shutdown](NULL);
+}
+
+void engine_stop(void){
+    service_provider_stop();
+}
+
+
 
 const Engine* engine_get(void){
     return &engine;

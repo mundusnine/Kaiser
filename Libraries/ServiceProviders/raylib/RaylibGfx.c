@@ -76,14 +76,21 @@ void raylib_draw_mesh(UID id){
     DrawModel(meshes[id],pos,1.0f,WHITE);
 }
 
+void raylib_get_window_size(int* w, int* h){
+    *w = GetScreenWidth();
+    *h = GetScreenHeight();
+}
+
 static IGfx gfx = {0};
 void create_graphics_provider(void* engine){
+    
     num_images = 0;
     gfx.begin = raylib_begin;
     gfx.end = raylib_end;
     gfx.begin3D = raylib_begin3D;
     gfx.end3D = raylib_end3D;
     gfx.clear = raylib_clear;
+    gfx.getWindowSize = raylib_get_window_size;
     gfx.setColor = raylib_set_color;
     gfx.drawRect = raylib_draw_rect;
     gfx.fillRect = raylib_fill_rect;

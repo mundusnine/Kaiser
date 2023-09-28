@@ -9,6 +9,8 @@ typedef struct IGfx {
     void (*begin3D)(Camera cam);
     void (*end3D)(void);
     void (*clear)(unsigned color);
+    void (*getWindowSize)(int* w,int* h);
+
     void (*setColor)(unsigned color);
     void (*drawRect)(float x, float y, float w,float h,float strength);
     void (*fillRect)(float x, float y, float w,float h);
@@ -22,4 +24,12 @@ typedef struct IGfx {
     void (*drawMesh)(UID id);
 } IGfx;
 
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 void create_graphics_provider(void* engine);
+
+#ifdef __cplusplus
+}
+#endif

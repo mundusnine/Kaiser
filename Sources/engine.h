@@ -2,6 +2,7 @@
 
 #include "ITimer.h"
 #include "IInput.h"
+#include "IUi.h"
 #include "ILogger.h"
 #include "IGfx.h"
 #include "ISfx.h"
@@ -11,6 +12,7 @@
 typedef struct Engine {
     const ITimer* timer;
     const IInput* input;
+    const IUi* ui;
     const ILogger* log;
     const IGfx* gfx;
     const ISfx* sfx;
@@ -27,7 +29,7 @@ void init_gameplay(void);
 
 
 void engine_init(const char* window_name,int w, int h);
-void engine_update(void);
 void engine_start(void);
+void engine_stop(void);
 
 const Engine* engine_get(void);

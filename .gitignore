@@ -4,6 +4,9 @@ projects/**
 examples/sample/Deployment/**
 !examples/sample/Deployment/assets
 !examples/sample/Deployment/assets/**
+# examples/editor/Deployment/**
+# !examples/editor/Deployment/assets
+# !examples/editor/Deployment/assets/**
 .vscode/**
 !.vscode/launch.json
 !.vscode/tasks.json

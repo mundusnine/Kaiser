@@ -2,6 +2,8 @@
 - Do [this](https://nitter.net/MikeDiskett/status/1705420794980184412)
 - Have a way to share low level commands between Editor and Runtime.
 - Use [Im3D](https://github.com/john-chapman/im3d) for gizmos
+- Use [JSON schema](https://json-schema.org/) to allow users to automate the generation of importers with [quicktype](https://github.com/glideapps/quicktype/) or [online](https://app.quicktype.io/)
+- Like USD, have a way to report [atomic changes](https://jsonapi.org/ext/atomic/)
 
 # Engine:
 

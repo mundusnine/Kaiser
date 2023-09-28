@@ -6,12 +6,18 @@ void service_provider_init(const char* title,int w,int h){
     InitAudioDevice();
     InitWindow(w,h,title);
 }
+static bool shouldStop = false;
 void service_provider_start(void (*update)(void)){
 
-    while (!WindowShouldClose()){
+    while (!WindowShouldClose() && !shouldStop){
         update();
     }
+    
     CloseWindow();
     CloseAudioDevice();
 
+}
+
+void service_provider_stop(void){
+    shouldStop = true;
 }

@@ -22,79 +22,48 @@ void create_camera_entity(void){
     cameraController.type = Updateable;
     cameraController.funcs[Updateable] = update_cam_entity;
     eng->world->addComponent(id,&cameraController);
-
-
 }
-static UID tex_id = -1;
-static UID snd_id = -1;
-void moveImage(Entity* ent){
-    const Engine* engine = engine_get();
 
-    if(ent->transform.m14 < 360.0f){
-        ent->transform.m14+= 100 * engine->timer->dt();
-    }
-    else {
-        ent->transform.m14 = 0.0f;
-    }
-    static float pitch = 1.0f;
-    if(engine->input->isKeyDown(Key_A)){
-        pitch -=0.1f;
-        engine->sfx->setSndPitch(snd_id,pitch);
-        engine->sfx->playSnd(snd_id);
-    }
-    if(engine->input->isKeyDown(Key_D)){
-        pitch+=0.1f;
-    }
-}
-void renderImage(Entity* ent){
+void renderMainMenu(Entity* ent){
     const Engine* engine = engine_get();
+    IUi* ui = engine->ui;
+    IGfx* gfx = engine->gfx;
+    gfx->begin(0);
+
+    ui->begin();
+    static int open = 1;
+    ui->window_set_pos(0,0);
     int w,h;
-    engine->gfx->setColor(0xFF0000FF);
-    engine->gfx->fillRect(100,100,100,100);
-    engine->gfx->getImgSize(tex_id,&w,&h);
-    KRect rect = {.x=0,.y=0,.w=w,.h=h};
-    KRect dst = {.x=0,.y=0,.w=w*ent->transform.m0,.h=h*ent->transform.m5};
-    KFlip flip = {.x=0,.y=1};
-    engine->gfx->setColor(0xFFFFFFFF);
-    engine->gfx->drawImg(tex_id,rect,dst,ent->transform.m14,flip);
-}
-void create_image_entity(void){
-    const Engine* engine = engine_get();
-    tex_id = engine->gfx->loadImg("assets/icon.png");
-    Vector3 scale = Vector3One();
-    scale.x = scale.y = 0.5f;
-    UID id = engine->world->createEntity(Vector3Zero(),scale,Vector3Zero());
-    static Component imageMover = {0};
-    imageMover.type = Both;
-    imageMover.funcs[Updateable] = moveImage;
-    imageMover.funcs[Renderable] = renderImage;
-    engine->world->addComponent(id,&imageMover);
-    snd_id = engine->sfx->loadSnd("assets/sound.wav");
-}
-static UID mdl_id = -1;
-void renderModel(Entity* ent){
-    const Engine* engine = engine_get();
-    engine->gfx->begin3D(cam);
-    engine->gfx->drawMesh(mdl_id);
-    engine->gfx->end3D();
-}
-void create_model_entity(void){
-    const Engine* engine = engine_get();
-    mdl_id = engine->gfx->loadMesh("assets/teapot.obj");
+    gfx->getWindowSize(&w,&h);
+    ui->window_set_size(w,h);
+    if(ui->window_begin("Test",&open,KUiWindowFlags_NoMove | KUiWindowFlags_NoCollapse | KUiWindowFlags_NoResize | KUiWindowFlags_NoTitleBar)){
+        float elem_w = w* 0.5f;
+        ui->elem_set_pos((w- elem_w)*0.5f,-1);
+        if(ui->button("Press Me !",elem_w,0)){
+            engine->log->write(LOG_INFO,"Button works !");
+        }
+        ui->elem_set_pos((w- elem_w)*0.5f,-1);
+        if(ui->button("Quit",elem_w,0)){
+            engine_stop();
+        }
+        ui->window_end();
+    }
+    ui->end();
 
-    UID id = engine->world->createEntity(cam.position,Vector3One(),Vector3Zero());
-    static Component modelController = {0};
-    modelController.type = Renderable;
-    modelController.funcs[Renderable] = renderModel;
-    engine->world->addComponent(id,&modelController);
+    gfx->end(0);
+}
+void create_mainmenu_entity(void){
+    const Engine* engine = engine_get();
+    UID id = engine->world->createEntity(Vector3Zero(),Vector3One(),Vector3Zero());
+    static Component main_menu = {0};
+    main_menu.type = Renderable;
+    main_menu.funcs[Renderable] = renderMainMenu;
+    engine->world->addComponent(id,&main_menu);
 }
 void kolosseum_init_worlds(const char* filepath,const char* dir){
     const Engine* engine = engine_get();
-    create_camera_entity();
-    create_image_entity();
-    create_model_entity();
-    engine->sfx->playMus(engine->sfx->loadMus("assets/country.mp3"));
-
+    // create_camera_entity();
+    create_mainmenu_entity();
 }
 static char* levels[] = {
     "MainMenu",
