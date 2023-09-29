@@ -36,7 +36,13 @@ typedef struct IUi {
     int (*window_begin)(const char* name,int* open,int flags);
     void(*window_end)(void);
     void (*elem_set_pos)(float x,float y);
-    int (*button)(const char* label,float w, float h);
+    void (*elem_same_line)(void);
+    int  (*table_begin)(const char* name,int num_colums);
+    void (*table_next_column)(void);
+    void (*table_end)();
+    void (*image)(UID image_id, float w, float h);
+    void (*text)(char* fmt,float fontSize,...);
+    int  (*button)(const char* label,float w, float h);
     void (*private_funcs[MAX_PRIVATE_FUNCS])(void* data);
 } IUi;
 

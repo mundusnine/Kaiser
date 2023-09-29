@@ -50,6 +50,10 @@ UID raylib_load_image(const char* filepath){
     return num_images++;
 }
 
+Texture2D* raylib_get_texture(UID image_id){
+    return &images[image_id];
+}
+
 void raylib_draw_image(UID id,KRect src, KRect dst,float angle,KFlip flip){
     assert(id < num_images);
     Rectangle s_rect = {.x=src.x,.y=src.y,.width=src.w,.height=src.h};

@@ -23,7 +23,7 @@ void create_camera_entity(void){
     cameraController.funcs[Updateable] = update_cam_entity;
     eng->world->addComponent(id,&cameraController);
 }
-
+UID logo_id = -1;
 void renderMainMenu(Entity* ent){
     const Engine* engine = engine_get();
     IUi* ui = engine->ui;
@@ -36,15 +36,30 @@ void renderMainMenu(Entity* ent){
     int w,h;
     gfx->getWindowSize(&w,&h);
     ui->window_set_size(w,h);
-    if(ui->window_begin("Test",&open,KUiWindowFlags_NoMove | KUiWindowFlags_NoCollapse | KUiWindowFlags_NoResize | KUiWindowFlags_NoTitleBar)){
-        float elem_w = w* 0.5f;
-        ui->elem_set_pos((w- elem_w)*0.5f,-1);
-        if(ui->button("Press Me !",elem_w,0)){
-            engine->log->write(LOG_INFO,"Button works !");
-        }
-        ui->elem_set_pos((w- elem_w)*0.5f,-1);
-        if(ui->button("Quit",elem_w,0)){
-            engine_stop();
+    if(ui->window_begin("MainMenu",&open,KUiWindowFlags_NoMove | KUiWindowFlags_NoCollapse | KUiWindowFlags_NoResize | KUiWindowFlags_NoTitleBar)){
+        
+        if(ui->table_begin("split",2)){
+            ui->table_next_column();
+            // ui->elem_set_pos((w * 0.5f - 100)*0.5f,-1);
+            ui->image(logo_id,100,100);
+            ui->text("Kolosseum",48);
+            ui->text("Version %d.%d",0,0,1);
+
+            float elem_w = w* 0.25f;
+            // ui->elem_set_pos((w- elem_w)*0.5f,-1);
+            // ui->elem_set_pos((w * 0.5f - elem_w)*0.5f,-1);
+            if(ui->button("New Scene",elem_w,0)){
+                engine->log->write(LOG_INFO,"Button works !");
+            }
+            ui->elem_same_line();
+            if(ui->button("Browse",elem_w,0)){
+                
+            }
+
+            ui->table_next_column();
+            ui->text("Recently Opened Scenes",0);
+            ui->table_end();
+
         }
         ui->window_end();
     }
@@ -54,6 +69,7 @@ void renderMainMenu(Entity* ent){
 }
 void create_mainmenu_entity(void){
     const Engine* engine = engine_get();
+    logo_id = engine->gfx->loadImg("assets/kolosseum.png");
     UID id = engine->world->createEntity(Vector3Zero(),Vector3One(),Vector3Zero());
     static Component main_menu = {0};
     main_menu.type = Renderable;
