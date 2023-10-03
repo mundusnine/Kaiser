@@ -13,6 +13,7 @@ static Entity entities[MAX_ENTITIES] = {0};
 UID world_create_entity(Vector3 position,Vector3 scale,Vector3 rotation){
     Entity* ent = &entities[num_entities];
     memset(ent,0,sizeof(Entity));
+    ent->active = 1;
     memset(ent->components,0,sizeof(Component) * MAX_COMPONENTS);
     ent->transform = MatrixTranslate(position.x,position.y,position.z);
     ent->transform = MatrixMultiply(ent->transform,MatrixScale(scale.x,scale.y,scale.z));
@@ -36,6 +37,7 @@ void world_update(void* data){
     Component* comp;
     for(int i =0; i < num_entities;++i){
         Entity* ent = &entities[i];
+        if(!ent->active) continue;
         for(int y = 0; y < MAX_COMPONENTS && ent->components[y] != NULL;++y){
             comp = ent->components[y];
             if(comp->type == Updateable || comp->type == Both){
@@ -51,6 +53,7 @@ void world_render(void* data){
     Component* comp;
     for(int i =0; i < num_entities;++i){
         Entity* ent = &entities[i];
+        if(!ent->active) continue;
         for(int y = 0; y < MAX_COMPONENTS && ent->components[y] != NULL;++y){
             comp = ent->components[y];
             if(comp->type == Renderable || comp->type == Both){

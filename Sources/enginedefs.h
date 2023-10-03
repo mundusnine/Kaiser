@@ -6,7 +6,7 @@
 #else
 #include "raylib.h"
 #endif
-
+#include <stdlib.h>
 #include <stdint.h>
 
 typedef struct KRect{
@@ -52,6 +52,7 @@ struct Component{
     void (*funcs[2])(Entity* ent);
 };
 struct Entity {
+    uint8_t active;
     Matrix transform;
     Component* components[MAX_COMPONENTS];
     UID assets[NUM_ASSETS_TYPES];

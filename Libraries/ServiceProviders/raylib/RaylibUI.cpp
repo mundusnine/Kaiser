@@ -3,7 +3,9 @@
 
 #include "rlImGui.h"
 #include "imgui.h"
+#include "imgui_internal.h"
 
+#include <stdio.h>
 #include <stdarg.h>
 
 static int isBegin = 0;
@@ -11,6 +13,8 @@ void rl_begin(void){
     assert(!isBegin && "End before you begin");
     rlImGuiBegin();
     isBegin = 1;
+    // bool open = true;
+	// ImGui::ShowDemoWindow(&open);
 }
 void rl_end(void){
     assert(isBegin && "Begin before you end");
@@ -35,6 +39,20 @@ void rl_window_end(void){
     ImGui::End();
 }
 
+void rl_popup_open(const char* str_id){
+    ImGui::OpenPopup(str_id);
+}
+void rl_popup_close(void){
+    ImGui::CloseCurrentPopup();
+}
+int rl_popup_begin(const char* str_id, int flags){
+    return (int)ImGui::BeginPopup(str_id,flags);
+}
+
+void rl_popup_end(void){
+    ImGui::EndPopup();
+}
+
 void rl_elem_set_pos(float x, float y){
     if(x >= 0){
         ImGui::SetCursorPosX(x);   
@@ -43,6 +61,11 @@ void rl_elem_set_pos(float x, float y){
         ImGui::SetCursorPosY(y);   
     }
 }
+Vector2 rl_elem_get_pos(void){
+    ImVec2 pos = ImGui::GetCursorPos();
+    return {.x=pos.x,.y=pos.y};
+}
+
 void rl_elem_same_line(void){
     ImGui::SameLine();
 }
@@ -63,14 +86,24 @@ void rl_image(UID image_id,float w, float h){
     ImGui::Image((ImTextureID)image, ImVec2(width, height));
 }
 
-void rl_text(char* fmt,float fontSize,...){
+Vector2 rl_text(char* fmt,float fontSize,...){
     fontSize = fontSize >0 ? fontSize : ImGui::GetFontSize(); 
     ImGui::SetWindowFontScale(fontSize/ImGui::GetFontSize());
     va_list args;
     va_start(args, fmt);
-    ImGui::TextV(fmt,args);
+    const char* text, *text_end;
+    ImFormatStringToTempBufferV(&text, &text_end, fmt, args);
+    ImVec2 item_size = ImGui::CalcTextSize(text,text_end,false);
     va_end(args);
+    ImGui::TextUnformatted(text);
     ImGui::SetWindowFontScale(1.0f);
+    Vector2 out = {.x= item_size.x,.y=item_size.y};
+
+    return out;
+}
+
+int rl_text_input(const char* label,char* text_buffer,size_t buffer_size){
+    return (int)ImGui::InputText(label,text_buffer,buffer_size);
 }
 
 int rl_table_begin(const char* id, int num_columns){
@@ -102,15 +135,22 @@ void create_ui_provider(void* engine){
     ui.window_set_pos = rl_window_set_pos;
     ui.window_set_size = rl_window_set_size;
 
+    ui.popup_open = rl_popup_open;
+    ui.popup_close = rl_popup_close;
+    ui.popup_begin = rl_popup_begin;
+    ui.popup_end = rl_popup_end;
+
     ui.table_begin = rl_table_begin;
     ui.table_end = rl_table_end;
     ui.table_next_column = rl_table_next_column;
 
     ui.elem_set_pos = rl_elem_set_pos;
+    ui.elem_get_pos = rl_elem_get_pos;
     ui.elem_same_line = rl_elem_same_line;
 
     ui.image = rl_image;
     ui.text = rl_text;
+    ui.text_input = rl_text_input;
     ui.button = rl_button;
 
     ui.private_funcs[2] = rl_shutdown;

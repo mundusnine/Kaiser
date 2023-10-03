@@ -4,19 +4,27 @@
 #include "enginedefs.h"
 
 #include <assert.h>
-
+static int isBegin = 0;
 void raylib_begin(int window){
+    assert(isBegin ==0 && "End before you begin.");
+    isBegin = 1;
     BeginDrawing();
 }
 void raylib_end(int window){
+    assert(isBegin == 1 && "Begin before you end.");
+    isBegin = 0;
     EndDrawing();
 }
-
+static int isBegin3D = 0;
 void raylib_begin3D(Camera cam){
+    assert(isBegin3D ==0 && "End before you begin.");
+    isBegin3D = 1;
     BeginMode3D(cam);
 }
 
 void raylib_end3D(){
+    assert(isBegin3D ==1 && "Begin before you end.");
+    isBegin3D = 0;
     EndMode3D();
 }
 

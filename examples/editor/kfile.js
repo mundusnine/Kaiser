@@ -5,7 +5,13 @@ await project.addProject("../..",
     { service_provider:"raylib",options: ["3D",isDebug]}
 );
 
-project.addFiles('Sources/**');
+project.addIncludeDir("Libraries/cJSON");
+project.addIncludeDir("Sources");
+
+project.addFiles(
+    'Sources/**',
+    'Libraries/cJSON/**'
+);
 project.setDebugDir('Deployment');
 
 resolve(project);

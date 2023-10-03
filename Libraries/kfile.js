@@ -15,7 +15,8 @@ project.addFiles(
 	'imgui/imgui.h',
 	'imgui/imgui_draw.cpp',
 	'imgui/imgui_tables.cpp',
-	'imgui/imgui_widgets.cpp'
+	'imgui/imgui_widgets.cpp',
+    'imgui/imgui_demo.cpp',
 );
 
 if(Options[0] === "raylib"){
