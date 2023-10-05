@@ -1,0 +1,38 @@
+{
+    "$ref": "#/definitions/Scene",
+    "definitions": {
+      "Scene": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "A collection of entities",
+        "properties": {
+          "pokemon": {
+            "type": "array",
+            "description": "All pokémon contained in the pokédex",
+            "items": {
+              "$ref": "#/definitions/Entity"
+            }
+          }
+        },
+        "required": [
+          "entity"
+        ],
+        "title": "Scene"
+      },
+      "Entity": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "An Object that exist in the world.",
+        "properties": {
+          "uuid": {
+            "description": "A unique identifier for this entity.",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "title": "entity"
+      }
+    }
+}

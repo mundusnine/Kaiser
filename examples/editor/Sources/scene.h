@@ -1,2 +1,3 @@
+#pragma once
 
-int create_scene(const char* filename);
+int create_scene(char* filename);
