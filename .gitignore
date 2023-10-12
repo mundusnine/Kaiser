@@ -5,6 +5,8 @@ examples/sample/Deployment/**
 !examples/sample/Deployment/assets
 !examples/sample/Deployment/assets/**
 examples/editor/Deployment/**
+examples/editor/generated_includes
+examples/editor/nob
 !examples/editor/Deployment/assets
 !examples/editor/Deployment/assets/**
 .vscode/**

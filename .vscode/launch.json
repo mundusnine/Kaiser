@@ -7,7 +7,19 @@
 			"program": "/run/media/winesap/DATA/repos/Kaiser/examples/editor/Deployment/Kolosseum",
 			"cwd": "/run/media/winesap/DATA/repos/Kaiser/examples/editor/Deployment",
 			"preLaunchTask": "Debug Linux: Raylib"
+		},
+		{
+			"name": "(nob) Launch",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/examples/editor/nob",
+			"args": [],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder}/examples/editor",
+			"preLaunchTask": "Build nob"
 		}
+		  
+
 	],
 	"compounds": []
 }

@@ -7,10 +7,30 @@
             "label": "Debug Linux: Raylib",
             "type": "shell",
             "command": "./Tools/linux_x64/kmake --tolang raylib --compile --debug --from ./examples/editor",
+        },
+        {
+            "label": "Build nob",
+            "type": "shell",
+            "command": "zig",//"${workspaceFolder}/Tools/windows_x64/zig.exe",
+            "args": [
+                "cc",
+                "-std=c11",
+                "--debug",
+                "-fno-sanitize=undefined",
+                "-fno-omit-frame-pointer",
+                "-I${workspaceFolder}/examples/editor",
+                "-I${workspaceFolder}/examples/editor/Libraries/cJSON",
+                "-target",
+                "x86_64-linux",
+                "${workspaceFolder}/examples/editor/Libraries/cJSON/cJSON.c",
+                "${workspaceFolder}/examples/editor/nob.c",
+                "-o",
+                "${workspaceFolder}/examples/editor/nob"
+            ],
             "group": {
                 "kind": "build",
                 "isDefault": true
             }
-        }
+        },
     ]
 }
