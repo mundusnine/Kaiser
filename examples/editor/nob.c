@@ -97,6 +97,7 @@ int needs_include(char* struct_name){
         "Vector3",
         "Vector4",
         "Matrix",
+        "Transform",
         "Mesh",
         "Model",
         "KEntity",
@@ -112,11 +113,97 @@ int needs_include(char* struct_name){
 }
 typedef struct {
     char typename[32];
+    int is_pointer;
     int is_unsigned;
     int is_array;
+    int arr_len;
 } FType;
 
 FType build_ftype(const char* type_str){
+    FType type = {0};
+    char* curr = type_str;
+    char* unsign = strstr(curr,"unsigned");
+    type.is_unsigned = unsign != NULL; 
+    curr = type.is_unsigned ? unsign + 9 : curr;
+    char* ptr = strstr(curr,"*");
+    char* arr_s = strstr(curr,"[");
+    char* arr_e = strstr(curr,"]");
+
+    type.is_pointer = ptr != NULL;
+    char* end_type = ptr;
+    type.is_array = ptr != NULL || arr_s != NULL;
+    if(type.is_array && !ptr){
+        int i =1;
+        char num[64] ={0};
+        while(arr_s[i] !=']'){
+            num[i-1] = arr_s[i];
+            ++i;
+        }
+        type.arr_len = atoi(num);
+        end_type = arr_s;
+    }
+    
+    int size = end_type != NULL ? end_type - curr : strlen(curr);
+    int i =0;
+    int y = 0;
+
+    while(i < size){
+        if(curr[i] != ' '){
+            type.typename[y++] = curr[i];
+        }
+        ++i;
+    }
+
+    return type;
+}
+
+char* baseTypeTocJSON(FType type,int toJSON){
+    if(strcmp(type.typename,"float") == 0 || strcmp(type.typename,"int") == 0 || strcmp(type.typename,"short") == 0){
+        if(toJSON && type.is_array){
+            return "cJSON_CreateNumber";
+        }
+        return toJSON ? "cJSON_AddNumberToObject" : "cJSON_GetNumberValue";
+    }
+    if(strcmp(type.typename,"char") == 0 ){
+        return toJSON ? "cJSON_AddStringToObject" : "cJSON_GetStringValue";
+    }
+    
+}
+
+char* countsByType(char* typeName,char* fieldName){
+    #define GetCountByTypeName(name)                         \
+    do {                                                     \
+        size_t len = sizeof(name##Names)/sizeof(name##Names[0]); \
+        for(int i =0; i < len;++i){                          \
+            if(strcmp(fieldName,name##Names[i]) == 0){         \
+                return name##Counts[i];                        \   
+            }                                                \ 
+        }                                                    \
+    } while (0)                                              \
+
+    static char* meshNames[] = {
+        "vertices","texcoords","texcoords2","normals","tangents","colors",       
+        "indices","animVertices","animNormals",  "boneIds","boneWeights",
+        "vboId",        
+    };
+    static char* meshCounts[] = {
+        "vertexCount * 3","vertexCount * 2","vertexCount * 2","vertexCount * 3","vertexCount * 4","vertexCount * 4",
+        "triangleCount * 3","vertexCount * 3","vertexCount * 3","vertexCount * 4","vertexCount * 4",
+        "7/*MAX_MESH_VERTEX_BUFFERS*/"
+    };
+    static char* modelNames[] = {
+        "meshMaterial","meshes","materials","bones"
+    };
+    static char* modelCounts[] = {
+        "meshCount","meshCount","materialCount","boneCount"
+    };
+    if(strcmp(typeName,"Mesh") == 0){
+        GetCountByTypeName(mesh);
+    }
+    else if(strcmp(typeName,"Model") == 0){
+        GetCountByTypeName(model);
+    }
+    return NULL;
 
 }
 void write_fields_native(Nob_String_Builder* sb,char* type_name,int isPointer, cJSON* fields_arr){
@@ -130,9 +217,87 @@ void write_fields_native(Nob_String_Builder* sb,char* type_name,int isPointer, c
         if(nob_cstr_match(str,"FieldDecl")){
             char* type_str = cJSON_GetStringValue(cJSON_GetObjectItem(cJSON_GetObjectItem(obj,"type"),"qualType"));
             FType type = build_ftype(type_str);
+
+            char* t_access = isPointer ? "->" : ".";
+            char itemName[96] = {0};
+            snprintf(itemName,96,"item_%s",name);
+
+            nob_sb_append_cstr(sb,nob_temp_sprintf("\tcJSON* %s = cJSON_GetObjectItem(obj,\"%s\");\n",itemName,name));
+
+            char* size_mul = countsByType(type_name,name);
+            char* end_typename = strcmp(type.typename,"Quaternion") == 0 ? "Vector4" : type.typename;
+            char type_get[64] ={0};
+            char* ttype_get = baseTypeTocJSON(type,0);
+            if(!ttype_get){
+                snprintf(type_get,64,"json_to_%s",end_typename);
+            }
+            else{
+                snprintf(type_get,64,"%s",ttype_get);
+            }
+            if(strcmp(type.typename,"char") == 0 && type.is_array && !type.is_unsigned){
+                nob_sb_append_cstr(sb,nob_temp_sprintf("\tstrcpy(out%s%s,%s(%s));\n",t_access,name,baseTypeTocJSON(type,0),itemName));
+            }
+            else if(type.is_array && size_mul){
+                char* unsigned_c = type.is_unsigned ? "unsigned " : "";
+                char outType[64] = {0};
+                snprintf(outType,64,"out%s%s",t_access,size_mul);
+                if(isdigit(size_mul[0])){
+                    snprintf(outType,64,"%s",size_mul);
+                }
+                if(type.is_pointer){
+                    nob_sb_append_cstr(sb,nob_temp_sprintf("\tout%s%s = allocate(sizeof(%s%s) * (%s));\n",
+                        t_access,
+                        name,
+                        unsigned_c,
+                        end_typename,
+                        outType
+                    ));
+                }
+                nob_sb_append_cstr(sb,nob_temp_sprintf("\tmemcpy(out%s%s,%s(%s),sizeof(%s%s) * (%s));\n",
+                    t_access,
+                    name,
+                    type_get,
+                    itemName,
+                    unsigned_c,
+                    type.typename,
+                    outType
+                ));
+            }
+            else{
+                // file = write(file,`out${access} = (${outType})${baseTypeToCJSON(f_type,false)}(${itemName});`,1);
+                if(type.is_pointer){
+                    nob_sb_append_cstr(sb,nob_temp_sprintf("\t%s temp_%s = json_to_%s(%s);\n",
+                        end_typename,
+                        name,
+                        end_typename,
+                        itemName
+                    ));
+                    nob_sb_append_cstr(sb,nob_temp_sprintf("\tout%s%s = allocate(sizeof(%s));\n",
+                        t_access,
+                        name,
+                        end_typename
+                    ));
+                    nob_sb_append_cstr(sb,nob_temp_sprintf("\tmemcpy(out%s%s,&temp_%s,sizeof(%s));\n",
+                        t_access,
+                        name,
+                        name,
+                        end_typename
+                    ));
+                }
+                else {
+                    nob_sb_append_cstr(sb,nob_temp_sprintf("\tout%s%s = json_to_%s(%s);\n",
+                        t_access,
+                        name,
+                        end_typename,
+                        itemName
+                    ));
+                }
+            }
+            nob_sb_append_cstr(sb,"\n");
         }
     }
 }
+const char* base_path = "./generated_includes";
 int main( int argc, char** argv){
     Config config = {0};
     config.target = TARGET_ZIG;
@@ -143,16 +308,17 @@ int main( int argc, char** argv){
     nob_sb_append_null(&h_sb);
     cJSON* root = cJSON_Parse(h_sb.items);
 
+    memset(h_sb.items,0,h_sb.count);
     h_sb.count = 0;//Use for .h
     c_sb.count = 0;//Use for .c
 
-    const char* hFilename = "scene_parsing.h";
+    const char* hFilename = "scene_parsing";
 
     nob_sb_append_cstr(&h_sb,"#pragma once\n");
     nob_sb_append_cstr(&h_sb,"struct cJSON;\n");
     nob_sb_append_cstr(&c_sb,"#include \"cJSON.h\"\n");
     nob_sb_append_cstr(&c_sb,"#include \"scenedefs.h\"\n");
-    nob_sb_append_multi(&c_sb,"#include \"",hFilename,"\"\n");
+    nob_sb_append_cstr(&c_sb,nob_temp_sprintf("#include \"%s.h\"\n\n",hFilename));
 
     cJSON* arr = cJSON_GetObjectItem(root,"inner");
     if(cJSON_IsArray(arr)){
@@ -162,22 +328,24 @@ int main( int argc, char** argv){
             cJSON* kind = cJSON_GetObjectItem(obj,"kind");
             cJSON* name_obj = cJSON_GetObjectItem(obj,"name");
             char* str = cJSON_GetStringValue(kind);
-            const char* name = cJSON_GetStringValue(name_obj);
+            char* name = cJSON_GetStringValue(name_obj);
             if(nob_cstr_match(str,"RecordDecl") && name_obj && needs_include(name)){
                 int isPointer = nob_cstr_match(name,"KScene") || nob_cstr_match(name,"KEntity");
-                nob_sb_append_multi(&h_sb,"struct ",name,";\n");
+                nob_sb_append_cstr(&h_sb,nob_temp_sprintf("struct %s;\n",name));
                 char line[256] = {0};
                 int n = snprintf(line,256,"%s%s json_to_%s(cJSON* obj)",name,isPointer ? "*":"",name);
                 nob_sb_append_buf(&h_sb,line,n);
                 nob_sb_append_cstr(&h_sb,";\n");
                 
                 nob_sb_append_buf(&c_sb,line,n);
-                nob_sb_append_multi(&c_sb,"\t",name,isPointer ? "*":""," out = ",isPointer ? "NULL":"{0}",";\n");
+                nob_sb_append_cstr(&c_sb,nob_temp_sprintf("{\n\t%s%s out = %s;\n",name,isPointer ? "*":"",isPointer ? "NULL":"{0}"));
                 cJSON* fields_arr = cJSON_GetObjectItem(obj,"inner");
                 assert(fields_arr && "Should not be NULL");
                 if(fields_arr){
                     write_fields_native(&c_sb,name,isPointer,fields_arr);
                 }
+                nob_sb_append_cstr(&c_sb,"}\n");
+
                 //add C content
 
                 // memset(line,0,n);
@@ -188,5 +356,13 @@ int main( int argc, char** argv){
             }
         }
     }
+    //Reevaluate if we need this... behavior seems unstable when using it so we remove for now. 
+    // nob_sb_append_null(&h_sb);
+    // nob_sb_append_null(&c_sb);
+    char path_name[128] = {0};
+    int n = snprintf(path_name,128,"%s/%s.h",base_path,hFilename);
+    nob_write_entire_file(path_name,h_sb.items,h_sb.count);
+    path_name[n-1] = 'c';
+    nob_write_entire_file(path_name,c_sb.items,c_sb.count* sizeof(char));   
 
 }
