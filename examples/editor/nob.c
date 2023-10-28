@@ -87,7 +87,7 @@ int nob_cstr_match(char* left, char* right){
         }
         ++i;
     }
-    if(left[i] != '\0')
+    if(left[i] != '\0' || right[i] != '\0')
         return 0;
     return 1;
 }
@@ -98,8 +98,14 @@ int needs_include(char* struct_name){
         "Vector4",
         "Matrix",
         "Transform",
+        "Color",
+        "Texture",
+        "Shader",
+        "MaterialMap",
+        "Material",
         "Mesh",
         "Model",
+        "BoneInfo",
         "KEntity",
         "KScene"
     };
@@ -153,7 +159,9 @@ FType build_ftype(const char* type_str){
         }
         ++i;
     }
-
+    if(nob_cstr_match(type.typename,"KScene") || nob_cstr_match(type.typename,"KEntity")){
+        type.is_pointer = 1;
+    }
     return type;
 }
 
@@ -165,9 +173,12 @@ char* baseTypeTocJSON(FType type,int toJSON){
         return toJSON ? "cJSON_AddNumberToObject" : "cJSON_GetNumberValue";
     }
     if(strcmp(type.typename,"char") == 0 ){
-        return toJSON ? "cJSON_AddStringToObject" : "cJSON_GetStringValue";
+        if(type.is_array && !type.is_unsigned){//This is a hack, we need to reevaluate this when we have more strings...
+            return toJSON ? "cJSON_AddStringToObject" : "cJSON_GetStringValue";
+        }
+        return toJSON ? "cJSON_AddNumberToObject" : "cJSON_GetNumberValue";
     }
-    
+    return NULL;
 }
 
 char* countsByType(char* typeName,char* fieldName){
@@ -197,12 +208,30 @@ char* countsByType(char* typeName,char* fieldName){
     static char* modelCounts[] = {
         "meshCount","meshCount","materialCount","boneCount"
     };
+    static char* shaderNames[] = {
+        "locs"
+    };
+    static char* shaderCounts[] = {
+        "32/*RL_MAX_SHADER_LOCATIONS*/"
+    };
+    static char* ksceneNames[] = {
+        "entities"
+    };
+    static char* ksceneCounts[] = {
+        "num_entities"
+    };
     if(strcmp(typeName,"Mesh") == 0){
         GetCountByTypeName(mesh);
     }
     else if(strcmp(typeName,"Model") == 0){
         GetCountByTypeName(model);
     }
+    else if(strcmp(typeName,"Shader") == 0){
+        GetCountByTypeName(shader);
+    }
+    // else if(strcmp(typeName,"KScene") == 0){
+    //     GetCountByTypeName(kscene);
+    // }
     return NULL;
 
 }
@@ -225,7 +254,7 @@ void write_fields_native(Nob_String_Builder* sb,char* type_name,int isPointer, c
             nob_sb_append_cstr(sb,nob_temp_sprintf("\tcJSON* %s = cJSON_GetObjectItem(obj,\"%s\");\n",itemName,name));
 
             char* size_mul = countsByType(type_name,name);
-            char* end_typename = strcmp(type.typename,"Quaternion") == 0 ? "Vector4" : type.typename;
+            char* end_typename = nob_cstr_match(type.typename,"Quaternion") ? "Vector4" : nob_cstr_match(type.typename,"Texture2D") ? "Texture" : type.typename;
             char type_get[64] ={0};
             char* ttype_get = baseTypeTocJSON(type,0);
             if(!ttype_get){
@@ -253,23 +282,43 @@ void write_fields_native(Nob_String_Builder* sb,char* type_name,int isPointer, c
                         outType
                     ));
                 }
-                nob_sb_append_cstr(sb,nob_temp_sprintf("\tmemcpy(out%s%s,%s(%s),sizeof(%s%s) * (%s));\n",
+                nob_sb_append_cstr(sb,nob_temp_sprintf(
+                    "\tfor(int i =0; i < cJSON_GetArraySize(%s);++i){\n"
+                    "\t\tcJSON* obj = cJSON_GetArrayItem(%s,i);\n"
+                    "\t\tout%s%s[i] = %s(obj);\n"
+                    "\t}\n",
+                    itemName,
+                    itemName,
                     t_access,
                     name,
-                    type_get,
+                    type_get
+                ));
+            }
+            else if(type.is_array && type.arr_len > 0){//static array
+                char assign_line[128] = {0};
+                if(!type.is_pointer){
+                    snprintf(assign_line,128,"\t\tout%s%s[i] = %s(obj);\n",t_access,name,type_get);
+                }
+                else {
+                    snprintf(assign_line,128,"\t\tmemcpy(&out%s%s[i],%s(obj),sizeof(%s));\n",t_access,name,type_get,type.typename);
+                }
+                nob_sb_append_cstr(sb,nob_temp_sprintf(
+                    "\tfor(int i =0; i < %d;++i){\n"
+                    "\t\tcJSON* obj = cJSON_GetArrayItem(%s,i);\n"
+                    "%s"
+                    "\t}\n",
+                    type.arr_len,
                     itemName,
-                    unsigned_c,
-                    type.typename,
-                    outType
+                    assign_line
                 ));
             }
             else{
                 // file = write(file,`out${access} = (${outType})${baseTypeToCJSON(f_type,false)}(${itemName});`,1);
                 if(type.is_pointer){
-                    nob_sb_append_cstr(sb,nob_temp_sprintf("\t%s temp_%s = json_to_%s(%s);\n",
+                    nob_sb_append_cstr(sb,nob_temp_sprintf("\t%s temp_%s = %s(%s);\n",
                         end_typename,
                         name,
-                        end_typename,
+                        type_get,
                         itemName
                     ));
                     nob_sb_append_cstr(sb,nob_temp_sprintf("\tout%s%s = allocate(sizeof(%s));\n",
@@ -285,10 +334,11 @@ void write_fields_native(Nob_String_Builder* sb,char* type_name,int isPointer, c
                     ));
                 }
                 else {
-                    nob_sb_append_cstr(sb,nob_temp_sprintf("\tout%s%s = json_to_%s(%s);\n",
+                    // char* ttype_get = baseTypeTocJSON(type,0);
+                    nob_sb_append_cstr(sb,nob_temp_sprintf("\tout%s%s = %s(%s);\n",
                         t_access,
                         name,
-                        end_typename,
+                        type_get,
                         itemName
                     ));
                 }
@@ -317,6 +367,7 @@ int main( int argc, char** argv){
     nob_sb_append_cstr(&h_sb,"#pragma once\n");
     nob_sb_append_cstr(&h_sb,"struct cJSON;\n");
     nob_sb_append_cstr(&c_sb,"#include \"cJSON.h\"\n");
+    nob_sb_append_cstr(&c_sb,"#include \"stdlib.h\"\n");
     nob_sb_append_cstr(&c_sb,"#include \"scenedefs.h\"\n");
     nob_sb_append_cstr(&c_sb,nob_temp_sprintf("#include \"%s.h\"\n\n",hFilename));
 
