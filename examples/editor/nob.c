@@ -166,7 +166,16 @@ FType build_ftype(const char* type_str){
 }
 
 char* baseTypeTocJSON(FType type,int toJSON){
-    if(strcmp(type.typename,"float") == 0 || strcmp(type.typename,"int") == 0 || strcmp(type.typename,"short") == 0){
+    int isInt = 0;
+    for(int i =8;i < 65;i*=2){
+        char needle[64] = {0};
+        snprintf(needle,64,"int%d_t",i);
+        if(strstr(type.typename,needle) != NULL){
+            isInt = 1;
+            break;
+        }
+    }
+    if(strcmp(type.typename,"float") == 0 || strcmp(type.typename,"int") == 0 || strcmp(type.typename,"short") == 0 || isInt){
         if(toJSON && type.is_array){
             return "cJSON_CreateNumber";
         }
@@ -235,118 +244,163 @@ char* countsByType(char* typeName,char* fieldName){
     return NULL;
 
 }
-void write_fields_native(Nob_String_Builder* sb,char* type_name,int isPointer, cJSON* fields_arr){
+typedef struct {
+    char* type_name;
+    char* field_name; 
+    char* field_type;
+    int isPointer;
+} CurDef_t;
+
+void visit_fields_and_write(Nob_String_Builder* sb,CurDef_t* def, cJSON* fields_arr,void (*write_func)(Nob_String_Builder* sb,CurDef_t* def)){
     int len = cJSON_GetArraySize(fields_arr);
     for(int i =0; i < len; ++i){
         cJSON* obj = cJSON_GetArrayItem(fields_arr,i);
         cJSON* kind = cJSON_GetObjectItem(obj,"kind");
         cJSON* name_obj = cJSON_GetObjectItem(obj,"name");
         char* str = cJSON_GetStringValue(kind);
-        const char* name = cJSON_GetStringValue(name_obj);
         if(nob_cstr_match(str,"FieldDecl")){
-            char* type_str = cJSON_GetStringValue(cJSON_GetObjectItem(cJSON_GetObjectItem(obj,"type"),"qualType"));
-            FType type = build_ftype(type_str);
-
-            char* t_access = isPointer ? "->" : ".";
-            char itemName[96] = {0};
-            snprintf(itemName,96,"item_%s",name);
-
-            nob_sb_append_cstr(sb,nob_temp_sprintf("\tcJSON* %s = cJSON_GetObjectItem(obj,\"%s\");\n",itemName,name));
-
-            char* size_mul = countsByType(type_name,name);
-            char* end_typename = nob_cstr_match(type.typename,"Quaternion") ? "Vector4" : nob_cstr_match(type.typename,"Texture2D") ? "Texture" : type.typename;
-            char type_get[64] ={0};
-            char* ttype_get = baseTypeTocJSON(type,0);
-            if(!ttype_get){
-                snprintf(type_get,64,"json_to_%s",end_typename);
-            }
-            else{
-                snprintf(type_get,64,"%s",ttype_get);
-            }
-            if(strcmp(type.typename,"char") == 0 && type.is_array && !type.is_unsigned){
-                nob_sb_append_cstr(sb,nob_temp_sprintf("\tstrcpy(out%s%s,%s(%s));\n",t_access,name,baseTypeTocJSON(type,0),itemName));
-            }
-            else if(type.is_array && size_mul){
-                char* unsigned_c = type.is_unsigned ? "unsigned " : "";
-                char outType[64] = {0};
-                snprintf(outType,64,"out%s%s",t_access,size_mul);
-                if(isdigit(size_mul[0])){
-                    snprintf(outType,64,"%s",size_mul);
-                }
-                if(type.is_pointer){
-                    nob_sb_append_cstr(sb,nob_temp_sprintf("\tout%s%s = allocate(sizeof(%s%s) * (%s));\n",
-                        t_access,
-                        name,
-                        unsigned_c,
-                        end_typename,
-                        outType
-                    ));
-                }
-                nob_sb_append_cstr(sb,nob_temp_sprintf(
-                    "\tfor(int i =0; i < cJSON_GetArraySize(%s);++i){\n"
-                    "\t\tcJSON* obj = cJSON_GetArrayItem(%s,i);\n"
-                    "\t\tout%s%s[i] = %s(obj);\n"
-                    "\t}\n",
-                    itemName,
-                    itemName,
-                    t_access,
-                    name,
-                    type_get
-                ));
-            }
-            else if(type.is_array && type.arr_len > 0){//static array
-                char assign_line[128] = {0};
-                if(!type.is_pointer){
-                    snprintf(assign_line,128,"\t\tout%s%s[i] = %s(obj);\n",t_access,name,type_get);
-                }
-                else {
-                    snprintf(assign_line,128,"\t\tmemcpy(&out%s%s[i],%s(obj),sizeof(%s));\n",t_access,name,type_get,type.typename);
-                }
-                nob_sb_append_cstr(sb,nob_temp_sprintf(
-                    "\tfor(int i =0; i < %d;++i){\n"
-                    "\t\tcJSON* obj = cJSON_GetArrayItem(%s,i);\n"
-                    "%s"
-                    "\t}\n",
-                    type.arr_len,
-                    itemName,
-                    assign_line
-                ));
-            }
-            else{
-                // file = write(file,`out${access} = (${outType})${baseTypeToCJSON(f_type,false)}(${itemName});`,1);
-                if(type.is_pointer){
-                    nob_sb_append_cstr(sb,nob_temp_sprintf("\t%s temp_%s = %s(%s);\n",
-                        end_typename,
-                        name,
-                        type_get,
-                        itemName
-                    ));
-                    nob_sb_append_cstr(sb,nob_temp_sprintf("\tout%s%s = allocate(sizeof(%s));\n",
-                        t_access,
-                        name,
-                        end_typename
-                    ));
-                    nob_sb_append_cstr(sb,nob_temp_sprintf("\tmemcpy(out%s%s,&temp_%s,sizeof(%s));\n",
-                        t_access,
-                        name,
-                        name,
-                        end_typename
-                    ));
-                }
-                else {
-                    // char* ttype_get = baseTypeTocJSON(type,0);
-                    nob_sb_append_cstr(sb,nob_temp_sprintf("\tout%s%s = %s(%s);\n",
-                        t_access,
-                        name,
-                        type_get,
-                        itemName
-                    ));
-                }
-            }
-            nob_sb_append_cstr(sb,"\n");
+            def->field_name = cJSON_GetStringValue(name_obj);
+            def->field_type = cJSON_GetStringValue(cJSON_GetObjectItem(cJSON_GetObjectItem(obj,"type"),"qualType"));
+            assert((def->field_name != NULL && def->field_type != NULL ) && "Something is really wrong brother");
+            write_func(sb,def);
         }
     }
 }
+void write_field_native(Nob_String_Builder* sb,CurDef_t* def){
+    int isPointer = def->isPointer;
+    char* type_name = def->type_name;
+    char* name = def->field_name;
+    char* type_str = def->field_type;
+
+    FType type = build_ftype(type_str);
+
+    char* t_access = isPointer ? "->" : ".";
+    char itemName[96] = {0};
+    snprintf(itemName,96,"item_%s",name);
+
+    nob_sb_append_cstr(sb,nob_temp_sprintf("\tcJSON* %s = cJSON_GetObjectItem(obj,\"%s\");\n",itemName,name));
+
+    char* size_mul = countsByType(type_name,name);
+    char* end_typename = nob_cstr_match(type.typename,"Quaternion") ? "Vector4" : nob_cstr_match(type.typename,"Texture2D") ? "Texture" : type.typename;
+    char type_get[64] ={0};
+    char* ttype_get = baseTypeTocJSON(type,0);
+    if(!ttype_get){
+        snprintf(type_get,64,"json_to_%s",end_typename);
+    }
+    else{
+        snprintf(type_get,64,"%s",ttype_get);
+    }
+    if(strcmp(type.typename,"char") == 0 && type.is_array && !type.is_unsigned){
+        nob_sb_append_cstr(sb,nob_temp_sprintf("\tstrcpy(out%s%s,%s(%s));\n",t_access,name,baseTypeTocJSON(type,0),itemName));
+    }
+    else if(type.is_array && size_mul){
+        char* unsigned_c = type.is_unsigned ? "unsigned " : "";
+        char outType[64] = {0};
+        snprintf(outType,64,"out%s%s",t_access,size_mul);
+        if(isdigit(size_mul[0])){
+            snprintf(outType,64,"%s",size_mul);
+        }
+        if(type.is_pointer){
+            nob_sb_append_cstr(sb,nob_temp_sprintf("\tout%s%s = allocate(sizeof(%s%s) * (%s));\n",
+                t_access,
+                name,
+                unsigned_c,
+                end_typename,
+                outType
+            ));
+        }
+        nob_sb_append_cstr(sb,nob_temp_sprintf(
+            "\tfor(int i =0; i < cJSON_GetArraySize(%s);++i){\n"
+            "\t\tcJSON* obj = cJSON_GetArrayItem(%s,i);\n"
+            "\t\tout%s%s[i] = %s(obj);\n"
+            "\t}\n",
+            itemName,
+            itemName,
+            t_access,
+            name,
+            type_get
+        ));
+    }
+    else if(type.is_array && type.arr_len > 0){//static array
+        char assign_line[128] = {0};
+        if(!type.is_pointer){
+            snprintf(assign_line,128,"\t\tout%s%s[i] = %s(obj);\n",t_access,name,type_get);
+        }
+        else {
+            snprintf(assign_line,128,"\t\tmemcpy(&out%s%s[i],%s(obj),sizeof(%s));\n",t_access,name,type_get,type.typename);
+        }
+        nob_sb_append_cstr(sb,nob_temp_sprintf(
+            "\tfor(int i =0; i < %d;++i){\n"
+            "\t\tcJSON* obj = cJSON_GetArrayItem(%s,i);\n"
+            "%s"
+            "\t}\n",
+            type.arr_len,
+            itemName,
+            assign_line
+        ));
+    }
+    else{
+        // file = write(file,`out${access} = (${outType})${baseTypeToCJSON(f_type,false)}(${itemName});`,1);
+        if(type.is_pointer){
+            nob_sb_append_cstr(sb,nob_temp_sprintf("\t%s temp_%s = %s(%s);\n",
+                end_typename,
+                name,
+                type_get,
+                itemName
+            ));
+            nob_sb_append_cstr(sb,nob_temp_sprintf("\tout%s%s = allocate(sizeof(%s));\n",
+                t_access,
+                name,
+                end_typename
+            ));
+            nob_sb_append_cstr(sb,nob_temp_sprintf("\tmemcpy(out%s%s,&temp_%s,sizeof(%s));\n",
+                t_access,
+                name,
+                name,
+                end_typename
+            ));
+        }
+        else {
+            // char* ttype_get = baseTypeTocJSON(type,0);
+            nob_sb_append_cstr(sb,nob_temp_sprintf("\tout%s%s = %s(%s);\n",
+                t_access,
+                name,
+                type_get,
+                itemName
+            ));
+        }
+    }
+    nob_sb_append_cstr(sb,"\n");
+}
+
+void write_json_from_native(Nob_String_Builder* sb,CurDef_t* def){
+    int isPointer = def->isPointer;
+    char* type_name = def->type_name;
+    char* name = def->field_name;
+    char* type_str = def->field_type;
+
+    FType type = build_ftype(type_str);
+    char* end_typename = nob_cstr_match(type.typename,"Quaternion") ? "Vector4" : nob_cstr_match(type.typename,"Texture2D") ? "Texture" : type.typename;
+    char type_get[64] ={0};
+    char* ttype_get = baseTypeTocJSON(type,1);
+    if(!ttype_get){
+        snprintf(type_get,64,"%s_to_json",end_typename);
+    }
+    else{
+        snprintf(type_get,64,"%s",ttype_get);
+    }
+    if(!ttype_get){
+        nob_sb_append_cstr(sb,nob_temp_sprintf("\tcJSON_AddItemToObject(out,\"%s\",%s(%sobj->%s));\n",name,type_get,!type.is_pointer ? "&":"", name));
+    }
+    else if(type.is_array){
+        
+    }
+    else {
+        nob_sb_append_cstr(sb,nob_temp_sprintf("\t%s(out,\"%s\",obj->%s);\n",type_get,name,name));
+    }
+
+}
+
 const char* base_path = "./generated_includes";
 int main( int argc, char** argv){
     Config config = {0};
@@ -382,28 +436,45 @@ int main( int argc, char** argv){
             char* name = cJSON_GetStringValue(name_obj);
             if(nob_cstr_match(str,"RecordDecl") && name_obj && needs_include(name)){
                 int isPointer = nob_cstr_match(name,"KScene") || nob_cstr_match(name,"KEntity");
+                CurDef_t def = {0};
+                def.type_name = name;
+                def.isPointer = isPointer;
+
                 nob_sb_append_cstr(&h_sb,nob_temp_sprintf("struct %s;\n",name));
                 char line[256] = {0};
                 int n = snprintf(line,256,"%s%s json_to_%s(cJSON* obj)",name,isPointer ? "*":"",name);
                 nob_sb_append_buf(&h_sb,line,n);
                 nob_sb_append_cstr(&h_sb,";\n");
                 
-                nob_sb_append_buf(&c_sb,line,n);
-                nob_sb_append_cstr(&c_sb,nob_temp_sprintf("{\n\t%s%s out = %s;\n",name,isPointer ? "*":"",isPointer ? "NULL":"{0}"));
                 cJSON* fields_arr = cJSON_GetObjectItem(obj,"inner");
                 assert(fields_arr && "Should not be NULL");
-                if(fields_arr){
-                    write_fields_native(&c_sb,name,isPointer,fields_arr);
-                }
+
+                nob_sb_append_buf(&c_sb,line,n);
+                nob_sb_append_cstr(&c_sb,nob_temp_sprintf("{\n\t%s%s out = %s;\n",name,isPointer ? "*":"",isPointer ? "NULL":"{0}"));
+                visit_fields_and_write(&c_sb,&def,fields_arr,write_field_native);
+                nob_sb_append_cstr(&c_sb,"\treturn out;\n");
                 nob_sb_append_cstr(&c_sb,"}\n");
+
+
 
                 //add C content
 
-                // memset(line,0,n);
-                // int n = snprintf(line,256,"cJSON* %s_to_json(%s%s obj);\n",name,name,isPointer ? "*":"");
-                // nob_sb_append_buf(&h_sb,line,n);
-                printf(name);
-                printf("\n");
+                memset(line,0,n);
+                n = snprintf(line,256,"cJSON* %s_to_json(%s* obj)",name,name);
+                nob_sb_append_buf(&h_sb,line,n);
+                nob_sb_append_cstr(&h_sb,";\n");
+
+                nob_sb_append_buf(&c_sb,line,n);
+                nob_sb_append_cstr(&c_sb,"{\n\tcJSON* out = cJSON_CreateObject();\n");
+                visit_fields_and_write(&c_sb,&def,fields_arr,write_json_from_native);
+                nob_sb_append_cstr(&c_sb,"\treturn out;\n");
+                nob_sb_append_cstr(&c_sb,"}\n");
+
+                //Add JSON Schema generation
+
+
+                // printf(name);
+                // printf("\n");
             }
         }
     }
